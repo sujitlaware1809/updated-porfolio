@@ -1,4 +1,8 @@
 [build]
 command = "pnpm run build"
 
-pages_build_output_dir = "out"
+[build.upload]
+format = "directory"
+
+[site]
+bucket = "./out"
