@@ -4,12 +4,16 @@
 const config = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
-  output: process.env.CF_PAGES ? undefined : "export",
-  distDir: process.env.CF_PAGES ? ".vercel/output/static" : "out",
+  output: "export",
+  distDir: "out",
   trailingSlash: true,
   images: {
     unoptimized: true,
     domains: ["localhost"],
+  },
+  // Ensure routes manifest is generated
+  generateBuildId: async () => {
+    return "build"
   }
 };
 

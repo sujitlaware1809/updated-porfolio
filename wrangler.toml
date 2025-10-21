@@ -1,8 +1,9 @@
 [build]
 command = "pnpm run build"
-
-[build.upload]
-format = "directory"
+output_directory = "out"
 
 [site]
 bucket = "./out"
+
+[build.environment]
+NODE_VERSION = "18"
