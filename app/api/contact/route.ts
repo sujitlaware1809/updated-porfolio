@@ -1,18 +1,12 @@
 import { NextResponse } from 'next/server';
 
-// Use Node.js runtime in dev for reliable env access; switch to 'edge' later if needed.
-export const runtime = 'nodejs';
+// Cloudflare Pages requires Edge runtime for API routes
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
-const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'https://sujitlaware.com',
-  'https://www.sujitlaware.com',
-];
-
 function corsHeaders(origin: string | null) {
-  const allowOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  // Allow same-origin requests (Pages preview, custom domain, localhost)
+  const allowOrigin = origin || '*';
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
