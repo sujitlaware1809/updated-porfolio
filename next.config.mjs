@@ -1,3 +1,5 @@
+﻿const isDev = process.env.NODE_ENV === 'development';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -6,18 +8,13 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  images: {
-    unoptimized: true,
-  },
-  output: 'export',
-  distDir: 'out',
-  // Ensure trailing slashes are handled consistently
+  output: isDev ? undefined : 'export',
+  distDir: isDev ? '.next' : 'out',
   trailingSlash: true,
-  // Specify allowed domains for images
   images: {
-    domains: ['localhost'],
     unoptimized: true,
-  }
-}
+    domains: ['localhost'],
+  },
+};
 
-export default nextConfig
+export default nextConfig;
