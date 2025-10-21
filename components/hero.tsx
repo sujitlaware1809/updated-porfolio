@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button"
 import { ArrowUpCircle, Download, Github, Linkedin, Mail, Youtube, Instagram } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { AnimatedBackground } from "./animations/AnimatedBackground"
-import { FloatingSkills } from "./animations/FloatingSkills"
 import { TypedText } from "./animations/TypedText"
 import {
   Tooltip,
@@ -24,9 +22,7 @@ export default function Hero() {
   ]
 
   return (
-    <section id="home" className="relative py-20 md:py-32 flex flex-col items-center justify-center min-h-[90vh] overflow-hidden">
-      <AnimatedBackground />
-      <FloatingSkills />
+    <section id="home" className="relative py-20 md:py-32 flex flex-col items-center justify-center min-h-[90vh]">
       <div className="container px-4 md:px-6 mx-auto">
         <div className="flex flex-col items-center space-y-4 text-center">
           <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80">
