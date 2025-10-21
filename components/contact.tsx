@@ -41,12 +41,15 @@ export default function Contact() {
       // Start with optimistic update
       setSubmitStatus("sending")
 
-      // Build multipart form for Web3Forms (client-only path requires public key)
       const formData = new FormData()
-      const publicKey = process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY || ''
-      if (publicKey) {
-        formData.append('access_key', publicKey)
+      const publicKey = process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY
+      
+      if (!publicKey) {
+        throw new Error("Web3Forms access key is not configured")
       }
+
+      // Add required fields
+      formData.append('access_key', publicKey)
       formData.append('name', data.name)
       formData.append('email', data.email)
       formData.append('subject', data.subject)
@@ -55,53 +58,51 @@ export default function Contact() {
       formData.append('botcheck', '')
       formData.append('source', typeof window !== 'undefined' ? window.location.href : '')
 
+      // Add anti-spam headers
+      const headers = new Headers({
+        'Accept': 'application/json',
+        'Origin': typeof window !== 'undefined' ? window.location.origin : '',
+      })
+
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 15000) // 15s timeout
 
-      // Try direct provider submit first if public key exists (avoids server-side bot challenges)
-      let ok = false
-      let successMessage = ""
-      if (publicKey) {
-        try {
-          const res = await fetch('https://api.web3forms.com/submit', {
-            method: 'POST',
-            body: formData,
-            signal: controller.signal,
-            headers: {
-              Accept: 'application/json',
-            },
-          })
-          const contentType = res.headers.get('content-type') || ''
-          const json = contentType.includes('application/json') ? await res.json().catch(() => null) : null
-          if (json?.success) {
-            ok = true
-            successMessage = json?.message || 'Message sent successfully!'
-          }
-        } catch (_) {
-          // ignore and fallback
-        } finally {
-          clearTimeout(timeoutId)
-        }
-      }
-
-      // Fallback to internal API if direct call did not succeed
-      if (!ok) {
-        const r2 = await fetch('/api/contact', {
+      let message = 'Message sent successfully!'
+      
+      try {
+        const response = await fetch('https://api.web3forms.com/submit', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
+          body: formData,
+          headers,
+          signal: controller.signal,
         })
-        const j2 = await r2.json().catch(() => null)
-        if (!r2.ok || !j2?.ok) {
-          const msg = j2?.message || 'Failed to send message'
-          throw new Error(msg)
+
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(result.message || 'Failed to send message')
         }
-        successMessage = j2?.message || 'Message sent successfully!'
+
+        if (!result.success) {
+          throw new Error(result.message || 'Failed to send message')
+        }
+
+        message = result.message || message
+      } finally {
+        clearTimeout(timeoutId)
       }
 
       // Success state
       setSubmitStatus("sent")
-      toast.success(successMessage || "Message sent successfully! I'll get back to you soon.", {
+      toast.success(message, {
+        id: "contact-form",
+        duration: 5000
+      })
+      form.reset()
+
+      // Success state
+      setSubmitStatus("sent")
+      toast.success(message, {
         id: "contact-form",
         duration: 5000
       })

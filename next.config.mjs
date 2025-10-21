@@ -4,7 +4,7 @@
 const config = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
-  output: "export",
+  ...(isDev ? {} : { output: "export" }),
   distDir: "out",
   trailingSlash: true,
   images: {
