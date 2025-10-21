@@ -9,6 +9,7 @@ import { Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
+const MotionDiv = motion.div as unknown as React.ComponentType<any>;
 import Link from "next/link"
 import {
   Sheet,
@@ -34,7 +35,6 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState("home")
   const [sheetOpen, setSheetOpen] = useState(false)
-  const pathname = usePathname()
 
   // Function to determine which section is currently in view
   const determineActiveSection = useCallback(() => {
@@ -100,8 +100,8 @@ export default function Header() {
       )}
     >
       <div className="container mx-auto px-4 flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2 shrink-0">
-          <motion.div
+        <Link href="#home" onClick={(e) => scrollToSection(e, "#home")}>
+          <MotionDiv
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
@@ -109,7 +109,7 @@ export default function Header() {
             whileTap={{ scale: 0.95 }}
           >
             <span className="text-2xl font-bold gradient-text">SL</span>
-          </motion.div>
+          </MotionDiv>
         </Link>
 
         {/* Desktop Navigation */}
@@ -117,9 +117,8 @@ export default function Header() {
           <div className="flex space-x-4 items-center">
             {navItems.map((item, index) => {
               const isActive = activeSection === item.href.substring(1)
-
               return (
-                <motion.div
+                <MotionDiv
                   key={item.name}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -127,7 +126,7 @@ export default function Header() {
                   className="relative"
                 >
                   {isActive && (
-                    <motion.div
+                    <MotionDiv
                       layoutId="activeSection"
                       className="absolute inset-0 bg-primary/10 rounded-md -z-10"
                       transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -143,14 +142,14 @@ export default function Header() {
                   >
                     {item.name}
                     {isActive && (
-                      <motion.div
+                      <MotionDiv
                         className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary"
                         layoutId="underline"
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                       />
                     )}
                   </Link>
-                </motion.div>
+                </MotionDiv>
               )
             })}
           </div>

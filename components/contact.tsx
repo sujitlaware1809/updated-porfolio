@@ -55,13 +55,16 @@ export default function Contact() {
 
       clearTimeout(timeoutId)
 
-      if (!response.ok) {
-        throw new Error("Failed to send message")
+      const json = await response.json().catch(() => null)
+
+      if (!response.ok || !json?.ok) {
+        const msg = json?.message || "Failed to send message"
+        throw new Error(msg)
       }
 
       // Success state
       setSubmitStatus("sent")
-      toast.success("Message sent successfully! I'll get back to you soon.", {
+      toast.success(json?.message || "Message sent successfully! I'll get back to you soon.", {
         id: "contact-form",
         duration: 5000
       })
@@ -77,7 +80,8 @@ export default function Contact() {
       if (error instanceof Error && error.name === 'AbortError') {
         toast.error("Request timed out. Please try again.", { id: "contact-form" })
       } else {
-        toast.error("Failed to send message. Please try again.", { id: "contact-form" })
+        const msg = error instanceof Error ? error.message : "Failed to send message. Please try again."
+        toast.error(msg, { id: "contact-form" })
       }
       console.error("Error:", error)
     } finally {

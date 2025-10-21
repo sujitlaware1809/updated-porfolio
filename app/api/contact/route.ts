@@ -1,68 +1,87 @@
 import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
 
-export const runtime = 'nodejs'; // Set Node.js runtime
-export const dynamic = 'force-dynamic'; // Disable static optimization
+// Use Node.js runtime in dev for reliable env access; switch to 'edge' later if needed.
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://sujitlaware.com',
+  'https://www.sujitlaware.com',
+];
+
+function corsHeaders(origin: string | null) {
+  const allowOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  } as Record<string, string>;
+}
+
+export async function OPTIONS(req: Request) {
+  const origin = req.headers.get('origin');
+  return new Response(null, { status: 204, headers: corsHeaders(origin) });
+}
 
 export async function POST(request: Request) {
-  // Only allow POST method
-  if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
-  }
-
-  // Check origin for security
-  const origin = request.headers.get('origin');
-  if (!origin || !origin.includes('localhost') && !origin.includes('sujitlaware.dev')) {
-    return new Response('Unauthorized', { status: 403 });
-  }
-
   try {
+    const origin = request.headers.get('origin');
+
     const { name, email, subject, message } = await request.json();
 
-    // Create a transporter using SMTP
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
+    if (!name || !email || !subject || !message) {
+      return NextResponse.json(
+        { ok: false, message: 'Missing required fields' },
+        { status: 400, headers: corsHeaders(origin) }
+      );
+    }
+
+    const access_key = process.env.WEB3FORMS_ACCESS_KEY;
+    if (!access_key) {
+      console.error('WEB3FORMS_ACCESS_KEY is not set');
+      return NextResponse.json(
+        { ok: false, message: 'Server misconfiguration: missing access key' },
+        { status: 500, headers: corsHeaders(origin) }
+      );
+    }
+
+    const response = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
+      body: JSON.stringify({
+        access_key,
+        name,
+        email,
+        subject,
+        message,
+        from_name: 'Portfolio Contact Form',
+      }),
     });
 
-    // Email content
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: 'sujitlaware123@gmail.com', // Your email where you want to receive messages
-      subject: `Portfolio Contact: ${subject}`,
-      html: `
-        <h3>New Contact Form Submission</h3>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Subject:</strong> ${subject}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message}</p>
-      `,
-    };
+    const data = await response.json().catch(() => ({} as any));
 
-    // Send email
-    await transporter.sendMail(mailOptions);
+    if (!response.ok || data.success === false) {
+      const msg = data?.message || 'Failed to send via Web3Forms';
+      console.error('Web3Forms error:', data);
+      return NextResponse.json(
+        { ok: false, message: msg, provider: data },
+        { status: 400, headers: corsHeaders(origin) }
+      );
+    }
 
     return NextResponse.json(
-      { message: "Email sent successfully!" },
-      { 
-        status: 200,
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Content-Security-Policy': "default-src 'self'",
-          'X-Content-Type-Options': 'nosniff',
-          'X-Frame-Options': 'DENY',
-          'X-XSS-Protection': '1; mode=block'
-        }
-      }
+      { ok: true, message: data?.message || 'Message sent successfully!' },
+      { status: 200, headers: corsHeaders(origin) }
     );
   } catch (error) {
     console.error('Error sending email:', error);
     return NextResponse.json(
-      { error: "Failed to send email" },
+      { ok: false, message: 'Failed to send message' },
       { status: 500 }
     );
   }

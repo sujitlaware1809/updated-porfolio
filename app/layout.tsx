@@ -1,8 +1,12 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Analytics } from "@/components/analytics"
-import ClientLayout from "./client"
-import { Suspense } from "react"
+import { ThemeProvider } from "@/components/theme-provider"
+import Header from "@/components/header"
+import Footer from "@/components/footer"
+import AnimatedBackground from "@/components/animated-background"
+import { cn } from "@/lib/utils"
+import "./globals.css"
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://sujitlaware.com'),
@@ -67,14 +71,19 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <>
-      <Suspense>
-        <ClientLayout>{children}</ClientLayout>
-      </Suspense>
-      <Analytics />
-    </>
+    <html lang="en" suppressHydrationWarning>
+      <body className={cn("min-h-screen bg-background font-mono antialiased")}> 
+        {/* Client providers and site chrome */}
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          <div className="relative flex min-h-screen flex-col overflow-hidden">
+            <AnimatedBackground />
+            <Header />
+            <main className="flex-1 relative z-10">{children}</main>
+            <Footer />
+          </div>
+        </ThemeProvider>
+        <Analytics />
+      </body>
+    </html>
   )
 }
-
-
-import './globals.css'
