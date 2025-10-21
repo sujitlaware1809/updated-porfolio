@@ -1,3 +1,14 @@
+* text=auto eol=lf
+
+# Keep binary assets untouched
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
 # Normalize line endings to LF in repo to avoid CRLF noise
 * text=auto eol=lf
 
