@@ -1,10 +1,90 @@
+"use client"
+
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Mail, MapPin, Phone } from "lucide-react"
+import { useState, useRef } from "react"
+import { toast } from "sonner"
 
 export default function Contact() {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "sending" | "sent" | "error">("idle")
+  const formRef = useRef<HTMLFormElement>(null)
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsSubmitting(true)
+    setSubmitStatus("sending")
+
+    // Show immediate feedback
+    toast.loading("Sending your message...", { id: "contact-form" })
+
+    const form = e.currentTarget as HTMLFormElement
+    const formElements = form.elements as HTMLFormControlsCollection
+    const data = {
+      name: (formElements.namedItem('name') as HTMLInputElement)?.value || '',
+      email: (formElements.namedItem('email') as HTMLInputElement)?.value || '',
+      subject: (formElements.namedItem('subject') as HTMLInputElement)?.value || '',
+      message: (formElements.namedItem('message') as HTMLTextAreaElement)?.value || '',
+    }    // Validate form data
+    if (!data.name || !data.email || !data.subject || !data.message) {
+      toast.error("Please fill in all fields", { id: "contact-form" })
+      setIsSubmitting(false)
+      setSubmitStatus("error")
+      return
+    }
+
+    try {
+      // Start with optimistic update
+      setSubmitStatus("sending")
+
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+        signal: controller.signal
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        throw new Error("Failed to send message")
+      }
+
+      // Success state
+      setSubmitStatus("sent")
+      toast.success("Message sent successfully! I'll get back to you soon.", {
+        id: "contact-form",
+        duration: 5000
+      })
+      form.reset()
+
+      // Reset form state after delay
+      setTimeout(() => {
+        setSubmitStatus("idle")
+      }, 3000)
+    } catch (error) {
+      // Error state
+      setSubmitStatus("error")
+      if (error instanceof Error && error.name === 'AbortError') {
+        toast.error("Request timed out. Please try again.", { id: "contact-form" })
+      } else {
+        toast.error("Failed to send message. Please try again.", { id: "contact-form" })
+      }
+      console.error("Error:", error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const contactInfo = [
     {
       icon: <Mail className="h-6 w-6 text-primary" />,
@@ -42,7 +122,15 @@ export default function Contact() {
               <div className="lg:col-span-2">
                 <Card>
                   <CardContent className="p-6">
-                    <form action="https://formspree.io/f/xanoenzo" method="POST" className="space-y-6">
+                    <form 
+                      ref={formRef} 
+                      onSubmit={handleSubmit} 
+                      className="space-y-6"
+                      method="POST"
+                      action="/api/contact"
+                      autoComplete="off"
+                      noValidate
+                    >
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label htmlFor="name" className="text-sm font-medium">
@@ -75,8 +163,61 @@ export default function Contact() {
                           required
                         />
                       </div>
-                      <Button type="submit" className="w-full">
-                        Send Message
+                      <Button 
+                        type="submit" 
+                        className={`w-full transition-all duration-200 ${
+                          submitStatus === "sent" ? "bg-green-500 hover:bg-green-600" : 
+                          submitStatus === "error" ? "bg-red-500 hover:bg-red-600" : ""
+                        }`} 
+                        disabled={isSubmitting}
+                      >
+                        {submitStatus === "sending" ? (
+                          <>
+                            <svg
+                              className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            Sending...
+                          </>
+                        ) : submitStatus === "sent" ? (
+                          <>
+                            <svg
+                              className="-ml-1 mr-3 h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M5 13l4 4L19 7"
+                              ></path>
+                            </svg>
+                            Message Sent!
+                          </>
+                        ) : submitStatus === "error" ? (
+                          "Try Again"
+                        ) : (
+                          "Send Message"
+                        )}
                       </Button>
                       <noscript>
                         <p className="text-sm text-center text-muted-foreground mt-2">
@@ -118,7 +259,7 @@ export default function Contact() {
                     <p className="text-sm text-muted-foreground mb-4">Find me on these platforms</p>
                     <div className="flex gap-4">
                       <Button variant="outline" size="icon" asChild>
-                        <a href="https://github.com/maskeynihal" target="_blank" rel="noopener noreferrer">
+                        <a href="https://github.com/sujitlaware1809" target="_blank" rel="noopener noreferrer">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"
@@ -138,7 +279,7 @@ export default function Contact() {
                         </a>
                       </Button>
                       <Button variant="outline" size="icon" asChild>
-                        <a href="https://linkedin.com/in/maskeynihal" target="_blank" rel="noopener noreferrer">
+                        <a href="https://linkedin.com/in/sujit-laware" target="_blank" rel="noopener noreferrer">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"
@@ -159,7 +300,7 @@ export default function Contact() {
                         </a>
                       </Button>
                       <Button variant="outline" size="icon" asChild>
-                        <a href="mailto:t3w4e0rdaf6f@opayq.com">
+                        <a href="mailto:sujitlaware123@gmail.com">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="24"

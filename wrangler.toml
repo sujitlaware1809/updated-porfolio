@@ -1,0 +1,5 @@
+[build]
+command = "pnpm run build"
+
+[pages_build_output_dir]
+directory = "out"
