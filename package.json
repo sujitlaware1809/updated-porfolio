@@ -4,12 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "cross-env NODE_ENV=development next dev",
-    "build": "cross-env NODE_ENV=production next build && next export",
+    "build": "cross-env NODE_ENV=production next build",
     "build:dev": "cross-env NODE_ENV=development next build",
     "start": "next start",
     "lint": "next lint",
     "clean": "rimraf .next out",
-    "pages:build": "npx @cloudflare/next-on-pages"
+    "pages:build": "cross-env NODE_ENV=production next build"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "^1.2.1",
