@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ArrowUpCircle, Download, Github, Linkedin, Mail } from "lucide-react"
+import { ArrowUpCircle, Download, Github, Linkedin, Mail, Youtube, Instagram } from "lucide-react"
 import Link from "next/link"
 
 export default function Hero() {
@@ -58,6 +58,18 @@ export default function Hero() {
               <Link href="mailto:22f3002016@ds.study.iitm.ac.in">
                 <Mail className="h-5 w-5" />
                 <span className="sr-only">Email</span>
+              </Link>
+            </Button>
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="https://youtube.com/@sujitlaware" target="_blank" rel="noopener noreferrer">
+                <Youtube className="h-5 w-5" />
+                <span className="sr-only">YouTube</span>
+              </Link>
+            </Button>
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="https://instagram.com/sujit.bytes" target="_blank" rel="noopener noreferrer">
+                <Instagram className="h-5 w-5" />
+                <span className="sr-only">Instagram</span>
               </Link>
             </Button>
           </div>
